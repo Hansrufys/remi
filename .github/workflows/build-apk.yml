@@ -1,0 +1,86 @@
+name: Build Flutter APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Get dependencies
+      run: flutter pub get
+      
+    - name: Analyze code
+      run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      
+    - name: Build APK
+      run: flutter build apk --release
+      
+    - name: Build App Bundle (for Play Store)
+      run: flutter build appbundle --release
+      
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: remi-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
+        
+    - name: Upload App Bundle artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: remi-aab
+        path: build/app/outputs/bundle/release/app-release.aab
+        
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+    - name: Download APK
+      uses: actions/download-artifact@v4
+      with:
+        name: remi-apk
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        name: Release v1.0.${{ github.run_number }}
+        body: |
+          ## Remi - Ambient Memory App
+          
+          Built from commit: ${{ github.sha }}
+          
+          ### Download
+          - Download the APK below to install on your Android device
+          
+          ### Changes
+          See commit history for details.
+        files: |
+          app-release.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

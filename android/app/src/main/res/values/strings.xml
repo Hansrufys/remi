@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_short_label">Schnelle Notiz</string>
+    <string name="shortcut_long_label">Sprache mit Remi aufnehmen</string>
+    <string name="shortcut_disabled">Remi muss zuerst geöffnet werden</string>
+    <string name="widget_description">Schnelle Gedanken mit Remi aufnehmen</string>
+</resources>

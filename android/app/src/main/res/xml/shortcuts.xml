@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <!-- Static shortcut: appear on long-press of the app icon -->
+  <shortcut
+    android:shortcutId="quick_note"
+    android:enabled="true"
+    android:icon="@mipmap/launcher_icon"
+    android:shortcutShortLabel="@string/shortcut_short_label"
+    android:shortcutLongLabel="@string/shortcut_long_label"
+    android:shortcutDisabledMessage="@string/shortcut_disabled">
+    <intent
+      android:action="android.intent.action.VIEW"
+      android:targetPackage="com.remi.remi"
+      android:targetClass="com.remi.remi.MainActivity"
+      android:data="remi://quick-record" />
+    <categories android:name="android.shortcut.conversation" />
+  </shortcut>
+
+</shortcuts>

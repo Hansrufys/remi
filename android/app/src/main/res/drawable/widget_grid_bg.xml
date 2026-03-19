@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="150dp"
+    android:viewportWidth="300"
+    android:viewportHeight="150">
+    
+    <!-- Paper Background -->
+    <path
+        android:fillColor="#F9F7F2"
+        android:pathData="M0,0h300v150h-300z" />
+
+    <!-- Horizontal Lines (Grid) -->
+    <path
+        android:strokeColor="#E5E3DE"
+        android:strokeWidth="1"
+        android:pathData="M0,24h300 M0,48h300 M0,72h300 M0,96h300 M0,120h300 M0,144h300" />
+
+    <!-- Vertical Lines (Grid) -->
+    <path
+        android:strokeColor="#E5E3DE"
+        android:strokeWidth="1"
+        android:pathData="M24,0v150 M48,0v150 M72,0v150 M96,0v150 M120,0v150 M144,0v150 M168,0v150 M192,0v150 M216,0v150 M240,0v150 M264,0v150 M288,0v150" />
+</vector>
