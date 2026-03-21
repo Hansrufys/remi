@@ -336,7 +336,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   : 'AI is active — tap to pause',
               action: Switch(
                 value: isIncognito,
-                activeThumbColor: AppColors.of(context).bioAccent,
+                thumbColor: AppColors.of(context).bioAccent,
                 onChanged: (val) {
                   HapticFeedback.selectionClick();
                   ref.read(incognitoProvider.notifier).state = val;
