@@ -1,8 +1,9 @@
-﻿import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../../core/env/app_env.dart';
 import '../../core/router/app_router.dart';
 import '../models/memory_entry.dart';
 
@@ -22,14 +23,12 @@ class NotificationService {
       debugPrint('NotificationService: Local timezone detected: $timeZoneName');
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (e) {
-      debugPrint('NotificationService: Timezone detection failed, using fallback Europe/Berlin. Error: $e');
-      tz.setLocalLocation(tz.getLocation('Europe/Berlin'));
+      final fallbackTimezone = await AppEnv.getFallbackTimezone();
+      debugPrint('NotificationService: Timezone detection failed, using fallback $fallbackTimezone. Error: $e');
+      tz.setLocalLocation(tz.getLocation(fallbackTimezone));
     }
     
-    // Request permissions early for Android 13+ and iOS
-    await requestPermissions();
-    
-    const AndroidInitializationSettings initializationSettingsAndroid =
+  const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@drawable/ic_notification');
 
     const DarwinInitializationSettings initializationSettingsDarwin =
@@ -76,7 +75,7 @@ class NotificationService {
   }
 
   void _handleDailyWrapIntent() {
-    AppRouter.router.push('/evening_wrap');
+    AppRouter.router.push('/evening-wrap');
   }
 
   Future<void> showNotification({

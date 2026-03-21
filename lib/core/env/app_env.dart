@@ -4,6 +4,7 @@ const _keyGeminiApiKey = 'remi_gemini_api_key';
 const _keySupabaseUrl = 'remi_supabase_url';
 const _keySupabaseAnonKey = 'remi_supabase_anon_key';
 const _keyIsProUser = 'remi_is_pro_user';
+const _keyFallbackTimezone = 'remi_fallback_timezone';
 
 /// Manages app environment configuration, securely.
 class AppEnv {
@@ -59,4 +60,14 @@ class AppEnv {
     await _storage.delete(key: _keySupabaseUrl);
     await _storage.delete(key: _keySupabaseAnonKey);
   }
+
+  static const String defaultFallbackTimezone = 'Europe/Berlin';
+
+  static Future<String> getFallbackTimezone() async {
+    final stored = await _storage.read(key: _keyFallbackTimezone);
+    return (stored == null || stored.isEmpty) ? defaultFallbackTimezone : stored;
+  }
+
+  static Future<void> setFallbackTimezone(String timezone) =>
+      _storage.write(key: _keyFallbackTimezone, value: timezone);
 }

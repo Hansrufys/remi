@@ -377,33 +377,97 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> {
   }
 
   Widget _buildFreeformInput() {
+    final hasText = _textController.text.isNotEmpty;
+    final colors = AppColors.of(context);
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 120),
-      child: TextField(
-        controller: _textController,
-        focusNode: _focusNode,
-        onTap: () {
-          if (!_isTyping) setState(() => _isTyping = true);
-        },
-        onChanged: (val) {
-          if (val.isNotEmpty && !_isTyping) setState(() => _isTyping = true);
-          if (val.isEmpty && _isTyping) setState(() => _isTyping = false);
-        },
-        maxLines: null,
-        textInputAction: TextInputAction.newline,
-        style: AppTypography.textTheme(context).bodyLarge?.copyWith(fontSize: 18),
-        decoration: InputDecoration(
-          hintText: 'Was beschäftigt dich gerade?',
-          hintStyle: AppTypography.textTheme(context).bodyLarge?.copyWith(
-            color: AppColors.of(context).mutedText.withValues(alpha: 0.5),
-            fontSize: 18,
+      padding: const EdgeInsets.only(bottom: 120, left: 8, right: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: _isTyping
+              ? [
+                  BoxShadow(
+                    color: colors.bioAccent.withValues(alpha: 0.15),
+                    blurRadius: 16,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : [],
+        ),
+        child: GlassPill(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          borderRadius: BorderRadius.circular(24),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _textController,
+                  focusNode: _focusNode,
+                  onTap: () {
+                    if (!_isTyping) setState(() => _isTyping = true);
+                  },
+                  onChanged: (val) {
+                    final nowHasText = val.isNotEmpty;
+                    if (nowHasText != hasText) setState(() {});
+                    if (val.isNotEmpty && !_isTyping) setState(() => _isTyping = true);
+                    if (val.isEmpty && _isTyping) setState(() => _isTyping = false);
+                  },
+                  maxLines: 4,
+                  minLines: 1,
+                  textInputAction: TextInputAction.newline,
+                  style: AppTypography.textTheme(context).bodyLarge?.copyWith(
+                    fontSize: 16,
+                    color: colors.charcoal,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Was beschäftigt dich gerade?',
+                    hintStyle: AppTypography.textTheme(context).bodyLarge?.copyWith(
+                      color: colors.mutedText.withValues(alpha: 0.6),
+                      fontSize: 16,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    fillColor: Colors.transparent,
+                    filled: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              AnimatedScale(
+                scale: hasText ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutBack,
+                child: GestureDetector(
+                  onTap: hasText ? () => _processText(_textController.text) : null,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.charcoal,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.charcoal.withValues(alpha: 0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.arrow_upward_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          fillColor: Colors.transparent,
-          filled: true,
-          contentPadding: EdgeInsets.zero,
         ),
       ),
     );

@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import '../../core/theme/app_colors.dart';
 
-/// A frosted glass pill container â€” used throughout the app.
+/// A frosted glass pill container — used throughout the app.
 /// Now with a subtle animated shimmer border.
 class GlassPill extends StatefulWidget {
   final Widget child;
@@ -83,7 +83,7 @@ class _GlassPillState extends State<GlassPill>
   }
 }
 
-/// A bioluminescent pulse dot â€” used in the Intelligence Margin.
+/// A bioluminescent pulse dot — used in the Intelligence Margin.
 class PulseDot extends StatefulWidget {
   final Color? color;
   final double size;
@@ -144,7 +144,7 @@ class _PulseDotState extends State<PulseDot>
   }
 }
 
-/// Small colored chip for entry type tags â€” now with elastic spring pop-in.
+/// Small colored chip for entry type tags — now with elastic spring pop-in.
 class TagChip extends StatefulWidget {
   final String label;
   final Color color;
