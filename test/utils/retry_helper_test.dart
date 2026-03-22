@@ -38,7 +38,7 @@ void main() {
 
       test('throws after max retries exhausted', () async {
         var callCount = 0;
-        expect(
+        await expectLater(
           () => RetryHelper.withRetry<String>(
             operation: () async {
               callCount++;
@@ -72,7 +72,7 @@ void main() {
 
       test('does not retry when shouldRetry returns false', () async {
         var callCount = 0;
-        expect(
+        await expectLater(
           () => RetryHelper.withRetry<String>(
             operation: () async {
               callCount++;
