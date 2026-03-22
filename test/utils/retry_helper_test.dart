@@ -189,35 +189,56 @@ void main() {
       });
     });
 
-    group('_defaultShouldRetry', () {
-      test('retries on socket exceptions', () {
-        expect(
-          RetryHelper.withRetry<String>(
-            operation: () => throw Exception('SocketException: Failed'),
-            maxRetries: 0,
-          ).catchError((_) => 'caught'),
-          completion('caught'),
-        );
+    group('defaultShouldRetry behavior', () {
+      test('retries on socket exceptions', () async {
+        var callCount = 0;
+        try {
+          await RetryHelper.withRetry<String>(
+            operation: () async {
+              callCount++;
+              throw Exception('SocketException: Failed');
+            },
+            maxRetries: 2,
+            initialDelayMs: 10,
+          );
+        } catch (e) {
+          // Expected to throw after retries
+        }
+        expect(callCount, greaterThan(1)); // Should have retried
       });
 
-      test('retries on rate limit (429)', () {
-        expect(
-          RetryHelper.withRetry<String>(
-            operation: () => throw Exception('HTTP 429: Rate limited'),
-            maxRetries: 0,
-          ).catchError((_) => 'caught'),
-          completion('caught'),
-        );
+      test('retries on rate limit (429)', () async {
+        var callCount = 0;
+        try {
+          await RetryHelper.withRetry<String>(
+            operation: () async {
+              callCount++;
+              throw Exception('HTTP 429: Rate limited');
+            },
+            maxRetries: 2,
+            initialDelayMs: 10,
+          );
+        } catch (e) {
+          // Expected
+        }
+        expect(callCount, greaterThan(1));
       });
 
-      test('retries on service unavailable (503)', () {
-        expect(
-          RetryHelper.withRetry<String>(
-            operation: () => throw Exception('HTTP 503: Service unavailable'),
-            maxRetries: 0,
-          ).catchError((_) => 'caught'),
-          completion('caught'),
-        );
+      test('retries on service unavailable (503)', () async {
+        var callCount = 0;
+        try {
+          await RetryHelper.withRetry<String>(
+            operation: () async {
+              callCount++;
+              throw Exception('HTTP 503: Service unavailable');
+            },
+            maxRetries: 2,
+            initialDelayMs: 10,
+          );
+        } catch (e) {
+          // Expected
+        }
+        expect(callCount, greaterThan(1));
       });
     });
 
