@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:remi/core/utils/retry_helper.dart';
 
@@ -8,7 +7,6 @@ void main() {
     group('withRetry', () {
       test('returns result immediately on success', () async {
         var callCount = 0;
-
         final result = await RetryHelper.withRetry<String>(
           operation: () async {
             callCount++;
@@ -16,14 +14,12 @@ void main() {
           },
           maxRetries: 3,
         );
-
         expect(result, 'success');
         expect(callCount, 1);
       });
 
       test('retries on failure and succeeds', () async {
         var callCount = 0;
-
         final result = await RetryHelper.withRetry<String>(
           operation: () async {
             callCount++;
@@ -33,17 +29,15 @@ void main() {
             return 'success';
           },
           maxRetries: 3,
-          initialDelay: Duration(milliseconds: 10, // Fast for tests
-          maxDelay: Duration(milliseconds: 100,
+          initialDelayMs: 10,
+          maxDelayMs: 100,
         );
-
         expect(result, 'success');
         expect(callCount, 3);
       });
 
       test('throws after max retries exhausted', () async {
         var callCount = 0;
-
         expect(
           () => RetryHelper.withRetry<String>(
             operation: () async {
@@ -51,8 +45,8 @@ void main() {
               throw Exception('SocketException: Connection failed');
             },
             maxRetries: 3,
-            initialDelay: Duration(milliseconds: 10,
-            maxDelay: Duration(milliseconds: 100,
+            initialDelayMs: 10,
+            maxDelayMs: 100,
           ),
           throwsA(isA<Exception>()),
         );
@@ -60,7 +54,6 @@ void main() {
 
       test('respects shouldRetry callback', () async {
         var callCount = 0;
-
         final result = await RetryHelper.withRetry<String>(
           operation: () async {
             callCount++;
@@ -70,17 +63,15 @@ void main() {
             return 'success';
           },
           maxRetries: 3,
-          initialDelay: Duration(milliseconds: 10,
+          initialDelayMs: 10,
           shouldRetry: (e) => e.toString().contains('Retry'),
         );
-
         expect(result, 'success');
         expect(callCount, 2);
       });
 
       test('does not retry when shouldRetry returns false', () async {
         var callCount = 0;
-
         expect(
           () => RetryHelper.withRetry<String>(
             operation: () async {
@@ -88,19 +79,17 @@ void main() {
               throw Exception('Do not retry');
             },
             maxRetries: 3,
-            initialDelay: Duration(milliseconds: 10,
+            initialDelayMs: 10,
             shouldRetry: (e) => false,
           ),
           throwsA(isA<Exception>()),
         );
-
         expect(callCount, 1);
       });
 
       test('calls onRetry callback on each retry', () async {
         var callCount = 0;
         final retryLog = <String>[];
-
         await RetryHelper.withRetry<String>(
           operation: () async {
             callCount++;
@@ -110,13 +99,12 @@ void main() {
             return 'success';
           },
           maxRetries: 5,
-          initialDelay: Duration(milliseconds: 10,
-          maxDelay: Duration(milliseconds: 100,
+          initialDelayMs: 10,
+          maxDelayMs: 100,
           onRetry: (e, attempt, delay) {
             retryLog.add('Attempt $attempt: ${e.toString()}');
           },
         );
-
         expect(retryLog.length, 2);
         expect(retryLog[0], contains('Attempt 1'));
         expect(retryLog[1], contains('Attempt 2'));
@@ -125,7 +113,6 @@ void main() {
       test('uses exponential backoff', () async {
         var callCount = 0;
         final delays = <int>[];
-
         await RetryHelper.withRetry<String>(
           operation: () async {
             callCount++;
@@ -135,13 +122,12 @@ void main() {
             return 'success';
           },
           maxRetries: 5,
-          initialDelay: Duration(milliseconds: 100,
-          maxDelay: Duration(milliseconds: 10000,
+          initialDelayMs: 100,
+          maxDelayMs: 10000,
           onRetry: (e, attempt, delay) {
             delays.add(delay.inMilliseconds);
           },
         );
-
         // Check exponential growth (with jitter, so approximate)
         expect(delays[0], greaterThanOrEqualTo(100));
         expect(delays[1], greaterThanOrEqualTo(delays[0]));
@@ -150,8 +136,6 @@ void main() {
 
       test('caps delay at maxDelayMs', () async {
         var callCount = 0;
-        final maxDelay = Duration(milliseconds: 200);
-
         await RetryHelper.withRetry<String>(
           operation: () async {
             callCount++;
@@ -161,8 +145,8 @@ void main() {
             return 'success';
           },
           maxRetries: 10,
-          initialDelay: Duration(milliseconds: 1000, // Would normally grow large
-          maxDelay: Duration(milliseconds: 200,
+          initialDelayMs: 1000, // Would normally grow large
+          maxDelayMs: 200,
           onRetry: (e, attempt, delay) {
             expect(delay.inMilliseconds, lessThanOrEqualTo(200));
           },
@@ -187,7 +171,6 @@ void main() {
 
       test('retries on timeout', () async {
         var callCount = 0;
-
         final result = await RetryHelper.withTimeoutAndRetry<String>(
           operation: () async {
             callCount++;
@@ -198,10 +181,9 @@ void main() {
           },
           timeout: Duration(milliseconds: 100),
           maxRetries: 3,
-          initialDelay: Duration(milliseconds: 10,
-          maxDelay: Duration(milliseconds: 100,
+          initialDelayMs: 10,
+          maxDelayMs: 100,
         );
-
         expect(result, 'success');
         expect(callCount, 3);
       });
@@ -242,7 +224,6 @@ void main() {
     group('RetryFutureExtension', () {
       test('adds retry capability to any Future', () async {
         var callCount = 0;
-
         final result = await Future(() async {
           callCount++;
           if (callCount < 2) {
@@ -251,10 +232,9 @@ void main() {
           return 'success';
         }).withRetry(
           maxRetries: 3,
-          initialDelay: Duration(milliseconds: 10,
-          maxDelay: Duration(milliseconds: 100,
+          initialDelayMs: 10,
+          maxDelayMs: 100,
         );
-
         expect(result, 'success');
         expect(callCount, 2);
       });
