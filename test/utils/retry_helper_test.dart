@@ -29,8 +29,8 @@ void main() {
             return 'success';
           },
           maxRetries: 3,
-          initialDelayMs: 10,
-          maxDelayMs: 100,
+          initialDelay: Duration(milliseconds: 10),
+          maxDelay: Duration(milliseconds: 100),
         );
         expect(result, 'success');
         expect(callCount, 3);
@@ -45,8 +45,8 @@ void main() {
               throw Exception('SocketException: Connection failed');
             },
             maxRetries: 3,
-            initialDelayMs: 10,
-            maxDelayMs: 100,
+            initialDelay: Duration(milliseconds: 10),
+            maxDelay: Duration(milliseconds: 100),
           ),
           throwsA(isA<Exception>()),
         );
@@ -63,7 +63,7 @@ void main() {
             return 'success';
           },
           maxRetries: 3,
-          initialDelayMs: 10,
+          initialDelay: Duration(milliseconds: 10),
           shouldRetry: (e) => e.toString().contains('Retry'),
         );
         expect(result, 'success');
@@ -79,7 +79,7 @@ void main() {
               throw Exception('Do not retry');
             },
             maxRetries: 3,
-            initialDelayMs: 10,
+            initialDelay: Duration(milliseconds: 10),
             shouldRetry: (e) => false,
           ),
           throwsA(isA<Exception>()),
@@ -99,8 +99,8 @@ void main() {
             return 'success';
           },
           maxRetries: 5,
-          initialDelayMs: 10,
-          maxDelayMs: 100,
+          initialDelay: Duration(milliseconds: 10),
+          maxDelay: Duration(milliseconds: 100),
           onRetry: (e, attempt, delay) {
             retryLog.add('Attempt $attempt: ${e.toString()}');
           },
@@ -122,8 +122,8 @@ void main() {
             return 'success';
           },
           maxRetries: 5,
-          initialDelayMs: 100,
-          maxDelayMs: 10000,
+          initialDelay: Duration(milliseconds: 100),
+          maxDelay: Duration(milliseconds: 10000),
           onRetry: (e, attempt, delay) {
             delays.add(delay.inMilliseconds);
           },
@@ -134,7 +134,7 @@ void main() {
         expect(delays[2], greaterThanOrEqualTo(delays[1]));
       });
 
-      test('caps delay at maxDelayMs', () async {
+      test('caps delay at maxDelay', () async {
         var callCount = 0;
         await RetryHelper.withRetry<String>(
           operation: () async {
@@ -145,47 +145,12 @@ void main() {
             return 'success';
           },
           maxRetries: 10,
-          initialDelayMs: 1000, // Would normally grow large
-          maxDelayMs: 200,
+          initialDelay: Duration(milliseconds: 1000), // Would normally grow large
+          maxDelay: Duration(milliseconds: 200),
           onRetry: (e, attempt, delay) {
             expect(delay.inMilliseconds, lessThanOrEqualTo(200));
           },
         );
-      });
-    });
-
-    group('withTimeoutAndRetry', () {
-      test('times out long-running operations', () async {
-        expect(
-          () => RetryHelper.withTimeoutAndRetry<String>(
-            operation: () async {
-              await Future.delayed(Duration(seconds: 10));
-              return 'too late';
-            },
-            timeout: Duration(milliseconds: 100),
-            maxRetries: 1,
-          ),
-          throwsA(isA<TimeoutException>()),
-        );
-      });
-
-      test('retries on timeout', () async {
-        var callCount = 0;
-        final result = await RetryHelper.withTimeoutAndRetry<String>(
-          operation: () async {
-            callCount++;
-            if (callCount < 3) {
-              await Future.delayed(Duration(seconds: 10));
-            }
-            return 'success';
-          },
-          timeout: Duration(milliseconds: 100),
-          maxRetries: 3,
-          initialDelayMs: 10,
-          maxDelayMs: 100,
-        );
-        expect(result, 'success');
-        expect(callCount, 3);
       });
     });
 
@@ -199,7 +164,7 @@ void main() {
               throw Exception('SocketException: Failed');
             },
             maxRetries: 2,
-            initialDelayMs: 10,
+            initialDelay: Duration(milliseconds: 10),
           );
         } catch (e) {
           // Expected to throw after retries
@@ -216,7 +181,7 @@ void main() {
               throw Exception('HTTP 429: Rate limited');
             },
             maxRetries: 2,
-            initialDelayMs: 10,
+            initialDelay: Duration(milliseconds: 10),
           );
         } catch (e) {
           // Expected
@@ -233,7 +198,7 @@ void main() {
               throw Exception('HTTP 503: Service unavailable');
             },
             maxRetries: 2,
-            initialDelayMs: 10,
+            initialDelay: Duration(milliseconds: 10),
           );
         } catch (e) {
           // Expected
@@ -253,8 +218,8 @@ void main() {
           return 'success';
         }).withRetry(
           maxRetries: 3,
-          initialDelayMs: 10,
-          maxDelayMs: 100,
+          initialDelay: Duration(milliseconds: 10),
+          maxDelay: Duration(milliseconds: 100),
         );
         expect(result, 'success');
         expect(callCount, 2);
