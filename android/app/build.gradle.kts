@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.remi.remi"
+    namespace = "com.hansrufys.remiapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
