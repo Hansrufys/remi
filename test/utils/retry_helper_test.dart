@@ -154,6 +154,41 @@ void main() {
       });
     });
 
+    group('withTimeoutAndRetry', () {
+      test('times out long-running operations', () async {
+        await expectLater(
+          () => RetryHelper.withTimeoutAndRetry<String>(
+            operation: () async {
+              await Future.delayed(Duration(seconds: 10));
+              return 'too late';
+            },
+            timeout: Duration(milliseconds: 100),
+            maxRetries: 1,
+          ),
+          throwsA(isA<TimeoutException>()),
+        );
+      });
+
+      test('retries on timeout', () async {
+        var callCount = 0;
+        final result = await RetryHelper.withTimeoutAndRetry<String>(
+          operation: () async {
+            callCount++;
+            if (callCount < 3) {
+              await Future.delayed(Duration(seconds: 10));
+            }
+            return 'success';
+          },
+          timeout: Duration(milliseconds: 100),
+          maxRetries: 3,
+          initialDelay: Duration(milliseconds: 10),
+          maxDelay: Duration(milliseconds: 100),
+        );
+        expect(result, 'success');
+        expect(callCount, 3);
+      });
+    });
+
     group('defaultShouldRetry behavior', () {
       test('retries on socket exceptions', () async {
         var callCount = 0;
