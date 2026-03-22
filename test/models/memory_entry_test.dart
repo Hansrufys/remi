@@ -230,15 +230,14 @@ void main() {
         expect(EntryType.values, contains(EntryType.actionable));
         expect(EntryType.values, contains(EntryType.insight));
         expect(EntryType.values, contains(EntryType.factPattern));
-        expect(EntryType.values, contains(EntryType.pattern));
+        expect(EntryType.values, contains(EntryType.factPattern));
         expect(EntryType.values, contains(EntryType.unknown));
       });
 
       test('serializes to string correctly', () {
         expect(EntryType.actionable.name, 'actionable');
         expect(EntryType.insight.name, 'insight');
-        expect(EntryType.factPattern.name, 'fact');
-        expect(EntryType.pattern.name, 'pattern');
+    expect(EntryType.factPattern.name, 'fact pattern');
         expect(EntryType.unknown.name, 'unknown');
       });
     });
@@ -249,7 +248,7 @@ void main() {
           id: 42,
           uuid: 'test-uuid-789',
           rawText: 'Original text with more content',
-          type: EntryType.pattern,
+          type: EntryType.factPattern,
           summary: 'Pattern detected in behavior',
           createdAt: DateTime(2026, 3, 22, 14, 30),
           isCompleted: true,
