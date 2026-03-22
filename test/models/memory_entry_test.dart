@@ -97,7 +97,7 @@ void main() {
 
         expect(entry.uuid, 'test-uuid-456');
         expect(entry.rawText, 'Raw text from map');
-        expect(entry.type, EntryType.fact);
+        expect(entry.type, EntryType.factPattern);
         expect(entry.summary, 'Summary from map');
         expect(entry.isCompleted, true);
         expect(entry.isProcessing, false);
@@ -229,7 +229,7 @@ void main() {
       test('has all expected types', () {
         expect(EntryType.values, contains(EntryType.actionable));
         expect(EntryType.values, contains(EntryType.insight));
-        expect(EntryType.values, contains(EntryType.fact));
+        expect(EntryType.values, contains(EntryType.factPattern));
         expect(EntryType.values, contains(EntryType.pattern));
         expect(EntryType.values, contains(EntryType.unknown));
       });
@@ -237,7 +237,7 @@ void main() {
       test('serializes to string correctly', () {
         expect(EntryType.actionable.name, 'actionable');
         expect(EntryType.insight.name, 'insight');
-        expect(EntryType.fact.name, 'fact');
+        expect(EntryType.factPattern.name, 'fact');
         expect(EntryType.pattern.name, 'pattern');
         expect(EntryType.unknown.name, 'unknown');
       });

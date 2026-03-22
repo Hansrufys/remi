@@ -1,315 +1,194 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:remi/data/repositories/repositories.dart';
 import 'package:remi/data/models/memory_entry.dart';
+import 'package:remi/data/repositories/repositories.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
+  setUpAll(() {
+    // Initialize FFI for testing
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  });
+
   group('MemoryRepository', () {
     late MemoryRepository repository;
 
-    setUp(() {
+    setUp(() async {
       repository = MemoryRepository();
+      // Clean up before each test
+      await repository.deleteAll();
     });
 
-    group('CRUD operations', () {
-      test('adds and retrieves entry', () async {
-        final entry = MemoryEntry(
-          uuid: 'test-uuid-1',
-          rawText: 'Test memory entry',
-          type: EntryType.insight,
-          summary: 'Test summary',
-          createdAt: DateTime.now(),
-        );
-
-        await repository.add(entry);
-        final retrieved = await repository.getByUuid('test-uuid-1');
-
-        expect(retrieved, isNotNull);
-        expect(retrieved!.uuid, 'test-uuid-1');
-        expect(retrieved.summary, 'Test summary');
-      });
-
-      test('getByUuid returns null for non-existent entry', () async {
-        final result = await repository.getByUuid('non-existent-uuid');
-        expect(result, isNull);
-      });
-
-      test('updates existing entry', () async {
-        final entry = MemoryEntry(
-          uuid: 'test-uuid-2',
-          rawText: 'Original text',
-          type: EntryType.actionable,
-          summary: 'Original summary',
-          createdAt: DateTime.now(),
-        );
-
-        await repository.add(entry);
-
-        final updated = entry.copyWith(
-          summary: 'Updated summary',
-          isCompleted: true,
-        );
-        await repository.update(updated);
-
-        final retrieved = await repository.getByUuid('test-uuid-2');
-        expect(retrieved!.summary, 'Updated summary');
-        expect(retrieved.isCompleted, true);
-      });
-
-      test('delete removes entry', () async {
-        final entry = MemoryEntry(
-          uuid: 'test-uuid-3',
-          rawText: 'To be deleted',
-          type: EntryType.fact,
-          summary: 'Delete test',
-          createdAt: DateTime.now(),
-        );
-
-        await repository.add(entry);
-        await repository.delete('test-uuid-3');
-
-        final result = await repository.getByUuid('test-uuid-3');
-        expect(result, isNull);
-      });
-
-      test('delete on non-existent entry does not throw', () async {
-        // Should not throw
-        await repository.delete('non-existent-uuid');
-      });
+    tearDown(() async {
+      // Clean up after each test
+      await repository.deleteAll();
     });
 
-    group('query operations', () {
-      setUp(() async {
-        // Add test data
-        final entries = [
-          MemoryEntry(
-            uuid: 'query-1',
-            rawText: 'First entry',
-            type: EntryType.insight,
-            summary: 'Insight about Alice',
-            createdAt: DateTime(2026, 3, 20),
-            personMentioned: 'Alice',
-            tags: ['work', 'project'],
-          ),
-          MemoryEntry(
-            uuid: 'query-2',
-            rawText: 'Second entry',
-            type: EntryType.actionable,
-            summary: 'Task for Bob',
-            createdAt: DateTime(2026, 3, 21),
-            personMentioned: 'Bob',
-            isCompleted: false,
-            tags: ['personal'],
-          ),
-          MemoryEntry(
-            uuid: 'query-3',
-            rawText: 'Third entry',
-            type: EntryType.pattern,
-            summary: 'Pattern detected',
-            createdAt: DateTime(2026, 3, 22),
-            isCompleted: true,
-            tags: ['work', 'analysis'],
-          ),
-        ];
+    test('save and retrieve entry', () async {
+      final entry = MemoryEntry(
+        text: 'Test entry',
+        type: EntryType.factPattern,
+        createdAt: DateTime.now(),
+      );
 
-        for (final entry in entries) {
-          await repository.add(entry);
-        }
-      });
+      final id = await repository.save(entry);
+      expect(id, greaterThan(0));
 
-      test('getAll returns all entries', () async {
-        final all = await repository.getAll();
-        expect(all.length, greaterThanOrEqualTo(3));
-      });
-
-      test('getByType filters by type', () async {
-        final insights = await repository.getByType(EntryType.insight);
-        expect(insights.every((e) => e.type == EntryType.insight), true);
-      });
-
-      test('getByPerson filters by person', () async {
-        final aliceEntries = await repository.getByPerson('Alice');
-        expect(aliceEntries.every((e) => e.personMentioned == 'Alice'), true);
-      });
-
-      test('getPendingTasks returns only incomplete actionables', () async {
-        final pending = await repository.getPendingTasks();
-
-        expect(pending.every((e) =>
-          e.type == EntryType.actionable && !e.isCompleted), true);
-      });
-
-      test('search finds entries by text content', () async {
-        final results = await repository.search('Alice');
-        expect(results.any((e) => e.summary.contains('Alice')), true);
-      });
-
-      test('search returns empty list for no matches', () async {
-        final results = await repository.search('xyznonexistent');
-        expect(results, isEmpty);
-      });
-
-      test('getRecent returns limited number of entries', () async {
-        final recent = await repository.getRecent(limit: 2);
-        expect(recent.length, lessThanOrEqualTo(2));
-      });
-
-      test('getRecent returns most recent entries first', () async {
-        final recent = await repository.getRecent(limit: 10);
-
-        for (int i = 1; i < recent.length; i++) {
-          expect(
-            recent[i].createdAt.isBefore(recent[i - 1].createdAt) ||
-            recent[i].createdAt.isAtSameMomentAs(recent[i - 1].createdAt),
-            true,
-          );
-        }
-      });
-
-      test('getByTags filters by tags', () async {
-        final workEntries = await repository.getByTags(['work']);
-        expect(workEntries.every((e) => e.tags.contains('work')), true);
-      });
-
-      test('getByTags with multiple tags uses OR logic', () async {
-        final entries = await repository.getByTags(['work', 'personal']);
-        expect(
-          entries.every((e) => e.tags.contains('work') || e.tags.contains('personal')),
-          true,
-        );
-      });
+      final entries = await repository.getAllEntries();
+      expect(entries.length, 1);
+      expect(entries.first.text, 'Test entry');
+      expect(entries.first.type, EntryType.factPattern);
     });
 
-    group('statistics', () {
-      test('getCount returns total number of entries', () async {
-        final initialCount = await repository.getCount();
+    test('getRecentEntries returns entries in order', () async {
+      await repository.save(MemoryEntry(
+        text: 'Entry 1',
+        type: EntryType.factPattern,
+        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      ));
+      await repository.save(MemoryEntry(
+        text: 'Entry 2',
+        type: EntryType.event,
+        createdAt: DateTime.now(),
+      ));
 
-        await repository.add(MemoryEntry(
-          uuid: 'count-test',
-          rawText: 'Test',
-          type: EntryType.fact,
-          summary: 'Test',
-          createdAt: DateTime.now(),
-        ));
-
-        final newCount = await repository.getCount();
-        expect(newCount, initialCount + 1);
-      });
-
-      test('getCountByType returns correct counts', () async {
-        final count = await repository.getCountByType(EntryType.insight);
-        final insights = await repository.getByType(EntryType.insight);
-        expect(count, insights.length);
-      });
-
-      test('getCompletionRate calculates correctly', () async {
-        // Add completed and incomplete tasks
-        await repository.add(MemoryEntry(
-          uuid: 'complete-1',
-          rawText: 'Done',
-          type: EntryType.actionable,
-          summary: 'Done task',
-          createdAt: DateTime.now(),
-          isCompleted: true,
-        ));
-
-        await repository.add(MemoryEntry(
-          uuid: 'incomplete-1',
-          rawText: 'Pending',
-          type: EntryType.actionable,
-          summary: 'Pending task',
-          createdAt: DateTime.now(),
-          isCompleted: false,
-        ));
-
-        final rate = await repository.getCompletionRate();
-        expect(rate, greaterThanOrEqualTo(0.0));
-        expect(rate, lessThanOrEqualTo(100.0));
-      });
+      final entries = await repository.getRecentEntries(limit: 10);
+      expect(entries.length, 2);
+      // Most recent first
+      expect(entries.first.text, 'Entry 2');
     });
 
-    group('edge cases', () {
-      test('handles concurrent add operations', () async {
-        final futures = List.generate(10, (i) {
-          return repository.add(MemoryEntry(
-            uuid: 'concurrent-$i',
-            rawText: 'Concurrent $i',
-            type: EntryType.fact,
-            summary: 'Summary $i',
-            createdAt: DateTime.now(),
-          ));
-        });
+    test('getEntriesForPerson filters by person', () async {
+      await repository.save(MemoryEntry(
+        text: 'About Alice',
+        type: EntryType.factPattern,
+        createdAt: DateTime.now(),
+        person: 'Alice',
+      ));
+      await repository.save(MemoryEntry(
+        text: 'About Bob',
+        type: EntryType.factPattern,
+        createdAt: DateTime.now(),
+        person: 'Bob',
+      ));
 
-        await Future.wait(futures);
+      final aliceEntries = await repository.getEntriesForPerson('Alice');
+      expect(aliceEntries.length, 1);
+      expect(aliceEntries.first.person, 'Alice');
+    });
 
-        final all = await repository.getAll();
-        expect(all.where((e) => e.uuid.startsWith('concurrent-')).length, 10);
-      });
+    test('getUncompletedTasks returns only pending tasks', () async {
+      await repository.save(MemoryEntry(
+        text: 'Pending task',
+        type: EntryType.task,
+        createdAt: DateTime.now(),
+        isCompleted: false,
+      ));
+      await repository.save(MemoryEntry(
+        text: 'Completed task',
+        type: EntryType.task,
+        createdAt: DateTime.now(),
+        isCompleted: true,
+      ));
+      await repository.save(MemoryEntry(
+        text: 'Not a task',
+        type: EntryType.factPattern,
+        createdAt: DateTime.now(),
+      ));
 
-      test('update preserves original if fields unchanged', () async {
-        final entry = MemoryEntry(
-          uuid: 'preserve-test',
-          rawText: 'Original',
-          type: EntryType.insight,
-          summary: 'Original summary',
-          createdAt: DateTime(2026, 1, 1),
-          tags: ['original'],
-        );
+      final tasks = await repository.getUncompletedTasks();
+      expect(tasks.length, 1);
+      expect(tasks.first.text, 'Pending task');
+    });
 
-        await repository.add(entry);
-        await repository.update(entry); // Update with same data
+    test('searchEntries finds matching entries', () async {
+      await repository.save(MemoryEntry(
+        text: 'Alice likes coffee',
+        type: EntryType.factPattern,
+        createdAt: DateTime.now(),
+      ));
+      await repository.save(MemoryEntry(
+        text: 'Bob likes tea',
+        type: EntryType.factPattern,
+        createdAt: DateTime.now(),
+      ));
 
-        final retrieved = await repository.getByUuid('preserve-test');
-        expect(retrieved!.summary, 'Original summary');
-        expect(retrieved.tags, ['original']);
-      });
+      final results = await repository.searchEntries('Alice');
+      expect(results.length, 1);
+      expect(results.first.text, contains('Alice'));
+    });
 
-      test('handles special characters in search', () async {
-        await repository.add(MemoryEntry(
-          uuid: 'special-chars',
-          rawText: 'Entry with special chars: @#\$%^&*()',
-          type: EntryType.fact,
-          summary: 'Special: @#\$%',
-          createdAt: DateTime.now(),
-        ));
+    test('delete removes entry', () async {
+      final id = await repository.save(MemoryEntry(
+        text: 'To delete',
+        type: EntryType.factPattern,
+        createdAt: DateTime.now(),
+      ));
 
-        final results = await repository.search('@#\$%');
-        expect(results.isNotEmpty, true);
-      });
+      var entries = await repository.getAllEntries();
+      expect(entries.length, 1);
 
-      test('handles empty tags gracefully', () async {
-        final entry = MemoryEntry(
-          uuid: 'no-tags',
-          rawText: 'No tags',
-          type: EntryType.fact,
-          summary: 'No tags entry',
-          createdAt: DateTime.now(),
-          tags: [],
-        );
+      await repository.delete(id);
+      entries = await repository.getAllEntries();
+      expect(entries.length, 0);
+    });
 
-        await repository.add(entry);
-        final retrieved = await repository.getByUuid('no-tags');
-        expect(retrieved!.tags, isEmpty);
-      });
+    test('toggleCompletion updates task status', () async {
+      final id = await repository.save(MemoryEntry(
+        text: 'Task to complete',
+        type: EntryType.task,
+        createdAt: DateTime.now(),
+        isCompleted: false,
+      ));
 
-      test('handles null optional fields', () async {
-        final entry = MemoryEntry(
-          uuid: 'null-fields',
-          rawText: 'Test',
-          type: EntryType.insight,
-          summary: 'Test',
-          createdAt: DateTime.now(),
-          personMentioned: null,
-          taskDescription: null,
-          timeHint: null,
-        );
+      await repository.toggleCompletion(id, true);
 
-        await repository.add(entry);
-        final retrieved = await repository.getByUuid('null-fields');
+      final tasks = await repository.getUncompletedTasks();
+      expect(tasks.length, 0);
+    });
 
-        expect(retrieved!.personMentioned, isNull);
-        expect(retrieved.taskDescription, isNull);
-        expect(retrieved.timeHint, isNull);
-      });
+    test('updatePriority changes priority', () async {
+      final id = await repository.save(MemoryEntry(
+        text: 'Task',
+        type: EntryType.task,
+        createdAt: DateTime.now(),
+        priority: 1,
+      ));
+
+      await repository.updatePriority(id, 5);
+
+      final entries = await repository.getAllEntries();
+      expect(entries.first.priority, 5);
+    });
+  });
+
+  group('PersonRepository', () {
+    late PersonRepository repository;
+
+    setUp(() async {
+      repository = PersonRepository();
+      // Clean all profiles
+      final all = await repository.getAll();
+      for (var p in all) {
+        await repository.deleteProfile(p.id!);
+      }
+    });
+
+    test('upsert and findByName', () async {
+      final profile = PersonProfile(name: 'Alice', insights: []);
+      await repository.upsert(profile);
+
+      final found = await repository.findByName('Alice');
+      expect(found, isNotNull);
+      expect(found!.name, 'Alice');
+    });
+
+    test('getAll returns all profiles', () async {
+      await repository.upsert(PersonProfile(name: 'Alice', insights: []));
+      await repository.upsert(PersonProfile(name: 'Bob', insights: []));
+
+      final all = await repository.getAll();
+      expect(all.length, greaterThanOrEqualTo(2));
     });
   });
 }

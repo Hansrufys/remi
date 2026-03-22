@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:remi/core/utils/retry_helper.dart';
 
@@ -31,8 +33,8 @@ void main() {
             return 'success';
           },
           maxRetries: 3,
-          initialDelayMs: 10, // Fast for tests
-          maxDelayMs: 100,
+          initialDelay: Duration(milliseconds: 10, // Fast for tests
+          maxDelay: Duration(milliseconds: 100,
         );
 
         expect(result, 'success');
@@ -49,8 +51,8 @@ void main() {
               throw Exception('SocketException: Connection failed');
             },
             maxRetries: 3,
-            initialDelayMs: 10,
-            maxDelayMs: 100,
+            initialDelay: Duration(milliseconds: 10,
+            maxDelay: Duration(milliseconds: 100,
           ),
           throwsA(isA<Exception>()),
         );
@@ -68,7 +70,7 @@ void main() {
             return 'success';
           },
           maxRetries: 3,
-          initialDelayMs: 10,
+          initialDelay: Duration(milliseconds: 10,
           shouldRetry: (e) => e.toString().contains('Retry'),
         );
 
@@ -86,7 +88,7 @@ void main() {
               throw Exception('Do not retry');
             },
             maxRetries: 3,
-            initialDelayMs: 10,
+            initialDelay: Duration(milliseconds: 10,
             shouldRetry: (e) => false,
           ),
           throwsA(isA<Exception>()),
@@ -108,8 +110,8 @@ void main() {
             return 'success';
           },
           maxRetries: 5,
-          initialDelayMs: 10,
-          maxDelayMs: 100,
+          initialDelay: Duration(milliseconds: 10,
+          maxDelay: Duration(milliseconds: 100,
           onRetry: (e, attempt, delay) {
             retryLog.add('Attempt $attempt: ${e.toString()}');
           },
@@ -133,8 +135,8 @@ void main() {
             return 'success';
           },
           maxRetries: 5,
-          initialDelayMs: 100,
-          maxDelayMs: 10000,
+          initialDelay: Duration(milliseconds: 100,
+          maxDelay: Duration(milliseconds: 10000,
           onRetry: (e, attempt, delay) {
             delays.add(delay.inMilliseconds);
           },
@@ -159,8 +161,8 @@ void main() {
             return 'success';
           },
           maxRetries: 10,
-          initialDelayMs: 1000, // Would normally grow large
-          maxDelayMs: 200,
+          initialDelay: Duration(milliseconds: 1000, // Would normally grow large
+          maxDelay: Duration(milliseconds: 200,
           onRetry: (e, attempt, delay) {
             expect(delay.inMilliseconds, lessThanOrEqualTo(200));
           },
@@ -196,8 +198,8 @@ void main() {
           },
           timeout: Duration(milliseconds: 100),
           maxRetries: 3,
-          initialDelayMs: 10,
-          maxDelayMs: 100,
+          initialDelay: Duration(milliseconds: 10,
+          maxDelay: Duration(milliseconds: 100,
         );
 
         expect(result, 'success');
@@ -249,8 +251,8 @@ void main() {
           return 'success';
         }).withRetry(
           maxRetries: 3,
-          initialDelayMs: 10,
-          maxDelayMs: 100,
+          initialDelay: Duration(milliseconds: 10,
+          maxDelay: Duration(milliseconds: 100,
         );
 
         expect(result, 'success');
